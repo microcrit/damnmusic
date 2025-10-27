@@ -1,7 +1,8 @@
 # damnmusic
 
 For Rivals footage. Supports lyrics (occasionally) and album art. Also sucks because sometimes the lyrics are offset but I can't fix that. Thanks Spotify.   
-Occasionally transitions/animations conflict but ignore it.
+Occasionally transitions/animations conflict but ignore it.   
+Did I mention it's modern and has nice looking animations?   
 
 ## Setup
 ```bun run inst```   
