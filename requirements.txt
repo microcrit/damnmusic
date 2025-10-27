@@ -6,3 +6,5 @@ python-dotenv
 lrcup
 dateparser
 asyncio
+requests
+flask-cors

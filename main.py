@@ -1,5 +1,6 @@
+import json
 import flask
-from flask import Flask
+from flask import Flask, Response
 from flask_socketio import SocketIO, emit
 from cryptography.fernet import Fernet
 from lrcup import LRCLib
@@ -9,8 +10,13 @@ import os
 import threading
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+import requests
+import flask_cors
 
 dotenv.load_dotenv()
+
+TRACKERGG_API_KEY = os.getenv("TRACKERGG_API_KEY")
+assert TRACKERGG_API_KEY, "TRACKERGG_API_KEY environment variable not set"
 
 SPOT_API_KEY = os.getenv("SPOT_API_KEY")
 SPOT_API_SECRET = os.getenv("SPOT_API_SECRET")
@@ -24,7 +30,7 @@ def get_spotify_client():
     return spotipy.Spotify(auth_manager=SpotifyOAuth(
         client_id=SPOT_API_KEY,
         client_secret=SPOT_API_SECRET,
-        redirect_uri="http://localhost:5000/callback",
+        redirect_uri="http://127.0.0.1:5000/callback",
         scope="user-read-currently-playing"
     ))
 
@@ -39,12 +45,15 @@ def get_current_track_from_spotify():
 app = Flask(__name__)
 app.config["SECRET_KEY"] = Fernet.generate_key()
 socketio = SocketIO(app, async_mode="threading", cors_allowed_origins="*")
+flask_cors.CORS(app, resources={r"/*": {"origins": "*"}})
 
-
-@app.route("/")
+@app.route("/music")
 def home():
-    return flask.send_file("index.htm")
+    return flask.send_file("pages/music.htm")
 
+@app.route("/rivals")
+def rivals():
+    return flask.send_file("pages/rivals.htm")
 
 @app.route("/logo.svg")
 def logo():
@@ -56,10 +65,12 @@ lrclib = LRCLib()
 current_data = {}
 current_lyrics = ""
 subtext = os.getenv("SUBTEXT", "")
+current_rivals_data = {}
 
 @socketio.on("init_client")
 def on_connect():
-    global current_data, current_lyrics, subtext
+    global current_data, current_lyrics, subtext, current_rivals_data
+    emit("rivals_info", current_rivals_data)
     emit("subtext_info", {"subtext": subtext})
 
 
@@ -172,11 +183,88 @@ async def monitor_playback():
             print(f"Error in monitor_playback: {e}")
             await asyncio.sleep(5)
 
+def notnone(val):
+     assert val is not None
+     return val
+
+async def monitor_rivals():
+    global TRACKERGG_API_KEY, current_rivals_data, notnone
+    print("Starting rivals monitor...")
+    while True:
+        try:
+            user = requests.post(notnone(os.getenv("FLARESOLVERR_URL")), headers={ "Content-Type": "application/json", "Accept": "application/json" }, json={
+                 "cmd": "request.get",
+                 "url": "https://api.tracker.gg/api/v2/marvel-rivals/standard/profile/ign/" + notnone(os.getenv("RIVALS_USER")),
+                 "maxTimeout": 15000,
+            })
+            text = user.json().get("solution", {}).get("response", "").split("<pre>")[1].split("</pre>")[0]
+            user = json.loads(text).get("data", {})
+            data = {
+                "metadata": user.get("metadata", {}),
+                "platform": user.get("platformInfo", {}),
+                "user": user.get("userInfo", {}),
+                "heroStats": list(filter(lambda x: x.get("type") == "hero", user.get("segments", []))),
+                "roleStats": list(filter(lambda x: x.get("type") == "hero-role", user.get("segments", []))),
+            }
+            current_rivals_data = data
+            socketio.emit("rivals_info", data)
+            await asyncio.sleep(15*60)
+        except Exception as e:
+            print(f"Error in monitor_rivals: {e}")
+            await asyncio.sleep(10)
+
+@app.get("/watermark.png")
+def watermark():
+    return flask.send_file("wmark.png")
+
+@app.get("/img_proxy")
+def img_proxy():
+    url = flask.request.args.get("url", "")
+    if not url:
+        return flask.Response("No URL provided", status=400)
+    try:
+        resp = requests.get(url)
+        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+        headers = [(name, value) for (name, value) in resp.raw.headers.items() if name.lower() not in excluded_headers]
+        response = flask.Response(resp.content, resp.status_code, headers)
+        return response
+    except Exception as e:
+        return flask.Response(f"Error fetching image: {e}", status=500)
+
+def make_stream_app():
+    app2 = Flask("stream_app")
+
+    @app2.get("/")
+    def index():
+        return flask.send_file("pages/st/index.html")
+
+    @app2.get("/stream")
+    def stream():
+        r = requests.get("http://localhost:8080/live/livestream.flv", stream=True)
+        headers = {
+            "Content-Type": "video/x-flv",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+        def generate_chunks():
+            with r.raw as f:
+                while True:
+                    chunk = f.read(1024)
+                    if not chunk:
+                        break
+                    yield chunk
+
+        return Response(generate_chunks(), mimetype='video/x-flv', headers=headers)
+
+    app2.run(port=8005, host="127.0.0.1")
+    
+    
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    threading.Thread(
-        target=lambda: loop.run_until_complete(monitor_playback()), daemon=True
-    ).start()
-    socketio.run(app, port=5000)
+    loop.create_task(monitor_playback())
+    loop.create_task(monitor_rivals())
+    threading.Thread(target=make_stream_app).start()
+    threading.Thread(target=loop.run_forever).start()
+    socketio.run(app, port=int(os.getenv("WIDGET_PORT", 5001)), host="127.0.0.1")
