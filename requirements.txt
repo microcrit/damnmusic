@@ -8,3 +8,5 @@ dateparser
 asyncio
 requests
 flask-cors
+twitchAPI
+setuptools

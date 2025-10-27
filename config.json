@@ -1,0 +1,12 @@
+{
+  "LASTFM_USER": "cr_it",
+  "SUBTEXT": "@moldsporebirth twitch.tv / @moldsporebirth youtube.com",
+  "WMARK_SLIDES": ["wmark.png", "HGP E-Sports", "AH'27", "twitch: @moldsporebirth", "youtube: @moldsporebirth", "rivals: @cr.t"],
+  "TWITCH_USERNAME": "moldsporebirth",
+  "TWITCH_CHANNEL": "moldsporebirth",
+  "DISABLE_LYRICS": true,
+  "RIVALS_USER": "cr.t",
+  "FLARESOLVERR_URL": "http://localhost:8191/v1",
+  "WIDGET_PORT": 5001,
+  "BLOCKLIST_WORDS": ["streamboo","stream boo","boo.com"]
+}
