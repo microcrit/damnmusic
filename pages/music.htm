@@ -438,6 +438,7 @@
 			let progress_at_receive = 0;
 			let last_lyric_update_time = 0;
 			let current_lyric_index = -1;
+			let disableLyrics = false;
 
 			function hslToRgb(h, s, l) {
 				s /= 100;
@@ -828,6 +829,13 @@
 				socket.emit('init_client');
 			});
 
+			socket.on('lyrics', (data) => {
+				disableLyrics = data.disable || false;
+				if (disableLyrics) {
+					clearLyrics();
+				}
+			});
+
 			socket.on('subtext_info', (data) => {
 				let text = data.subtext || "";
 				let el_subtext = document.getElementById('subtext');
@@ -924,6 +932,7 @@
 			});
 			socket.on('playback_lyrics', (data) => {
 				console.log("Playback Lyrics:", data);
+				if (disableLyrics) return;
 				lyrics = parseLRC(data.lyrics);
 				current_lyric_index = -1;
 				update_display(false, true);

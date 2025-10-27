@@ -55,6 +55,10 @@ def home():
 def rivals():
     return flask.send_file("pages/rivals.htm")
 
+@app.route("/wmark")
+def watermark():
+    return flask.send_file("pages/wmark.htm")
+
 @app.route("/logo.svg")
 def logo():
     return flask.send_file("logo.svg")
@@ -66,12 +70,16 @@ current_data = {}
 current_lyrics = ""
 subtext = os.getenv("SUBTEXT", "")
 current_rivals_data = {}
+disable_lyrics = os.getenv("DISABLE_LYRICS", "false").lower() == "true"
 
 @socketio.on("init_client")
 def on_connect():
-    global current_data, current_lyrics, subtext, current_rivals_data
+    global current_data, current_lyrics, subtext, current_rivals_data, disable_lyrics
     emit("rivals_info", current_rivals_data)
     emit("subtext_info", {"subtext": subtext})
+    emit("lyrics", {"disable": disable_lyrics})
+    emit("lyrics", {"disabled": os.getenv("DISABLE_LYRICS", "false").lower() == "true"})
+    emit("wmark_slides", {"slides": notnone(os.getenv("WMARK_SLIDES")).split(";") if os.getenv("WMARK_SLIDES") else []})
 
 
 async def fetch_lyrics(artist, title):
@@ -129,7 +137,7 @@ async def monitor_playback():
                 
                 track_duration = track.get("duration_ms", 0) / 1000
                 
-                if artist_name and title:
+                if not disable_lyrics and artist_name and title:
                     lyrics = await fetch_lyrics(artist_name, title)
                     if lyrics:
                         socketio.emit("playback_lyrics", {"lyrics": lyrics})
@@ -137,6 +145,9 @@ async def monitor_playback():
                     else:
                         socketio.emit("playback_lyrics", {"lyrics": ""})
                         current_lyrics = ""
+                else:
+                    socketio.emit("playback_lyrics", {"lyrics": ""})
+                    current_lyrics = ""
                 
                 progress_ms = spotify_track.get("progress_ms", 0)
                 timestamp_ms = spotify_track.get("timestamp", 0)
@@ -192,30 +203,57 @@ async def monitor_rivals():
     print("Starting rivals monitor...")
     while True:
         try:
-            user = requests.post(notnone(os.getenv("FLARESOLVERR_URL")), headers={ "Content-Type": "application/json", "Accept": "application/json" }, json={
+            rivals_user = notnone(os.getenv("RIVALS_USER"))
+            url = f"https://api.tracker.gg/api/v2/marvel-rivals/standard/profile/ign/{rivals_user}?"
+            print(f"Making direct request to: {url}")
+            
+            flaresolverr_url = notnone(os.getenv("FLARESOLVERR_URL"))
+            print(f"Making request to FlareSolverr: {flaresolverr_url} for URL: {url}")
+            
+            user = requests.post(flaresolverr_url, headers={ "Content-Type": "application/json", "Accept": "application/json" }, json={
                  "cmd": "request.get",
-                 "url": "https://api.tracker.gg/api/v2/marvel-rivals/standard/profile/ign/" + notnone(os.getenv("RIVALS_USER")),
+                 "url": url,
                  "maxTimeout": 15000,
             })
-            text = user.json().get("solution", {}).get("response", "").split("<pre>")[1].split("</pre>")[0]
-            user = json.loads(text).get("data", {})
+            print(f"FlareSolverr response status: {user.status_code}")
+            print(f"FlareSolverr response text (first 500 chars): {user.text[:500]}")
+            
+            if user.status_code != 200:
+                print(f"FlareSolverr request failed with status {user.status_code}")
+                await asyncio.sleep(10)
+                continue
+            
+            response_json = user.json()
+            print(f"FlareSolverr JSON response: {response_json}")
+            
+            solution = response_json.get("solution", {})
+            response_text = solution.get("response", "")
+            print(f"Extracted response text (first 500 chars): {response_text[:500]}")
+            
+            if "<pre>" not in response_text or "</pre>" not in response_text:
+                print("No <pre> tags found in response")
+                await asyncio.sleep(10)
+                continue
+            
+            text = response_text.split("<pre>")[1].split("</pre>")[0]
+            print(f"Extracted JSON text: {text}")
+            
+            user_data = json.loads(text).get("data", {})
             data = {
-                "metadata": user.get("metadata", {}),
-                "platform": user.get("platformInfo", {}),
-                "user": user.get("userInfo", {}),
-                "heroStats": list(filter(lambda x: x.get("type") == "hero", user.get("segments", []))),
-                "roleStats": list(filter(lambda x: x.get("type") == "hero-role", user.get("segments", []))),
+                "metadata": user_data.get("metadata", {}),
+                "platform": user_data.get("platformInfo", {}),
+                "user": user_data.get("userInfo", {}),
+                "heroStats": list(filter(lambda x: x.get("type") == "hero", user_data.get("segments", []))),
+                "roleStats": list(filter(lambda x: x.get("type") == "hero-role", user_data.get("segments", []))),
             }
             current_rivals_data = data
             socketio.emit("rivals_info", data)
             await asyncio.sleep(15*60)
         except Exception as e:
             print(f"Error in monitor_rivals: {e}")
+            import traceback
+            traceback.print_exc()
             await asyncio.sleep(10)
-
-@app.get("/watermark.png")
-def watermark():
-    return flask.send_file("wmark.png")
 
 @app.get("/img_proxy")
 def img_proxy():
@@ -230,6 +268,12 @@ def img_proxy():
         return response
     except Exception as e:
         return flask.Response(f"Error fetching image: {e}", status=500)
+
+@app.get("/static/<path:filename>")
+def static_files(filename):
+    if '..' in filename or filename.startswith('/'):
+        return flask.Response("Invalid filename", status=400)
+    return flask.send_file(os.path.join("static", filename))
 
 def make_stream_app():
     app2 = Flask("stream_app")

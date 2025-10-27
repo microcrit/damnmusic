@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Watermark</title>
+    <meta charset="UTF-8">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body style="margin:0; padding:0; overflow:hidden;">
+    <div id="watermark-container" style="position:absolute; top:0; left:0; width:100%; height:100%;">
+        <div id="current-slide" style="position:absolute; top:0; left:0; width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center; pointer-events:none; transition: opacity 1s ease-in-out; display:flex; align-items:center; justify-content:center; font-size: min(15vw, 15vh); color:white;"></div>
+        <div id="next-slide" style="position:absolute; top:0; left:0; width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center; pointer-events:none; opacity:0; transition: opacity 1s ease-in-out; display:flex; align-items:center; justify-content:center; font-size: min(15vw, 15vh); color:white;"></div>
+    </div>
+    <style>
+        .text-slide {
+            background: linear-gradient(45deg, #00a6ff, #c800ff);
+            background-size: 200% 200%;
+            animation: backgroundAnimation 3s ease infinite;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Arial Black', sans-serif;
+        }
+
+        @keyframes backgroundAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+    <script>
+        const socket = io();
+        let currentSlide = document.getElementById('current-slide');
+        let nextSlide = document.getElementById('next-slide');
+        let slides = ['/static/wmark.png'];
+        let currentIndex = 0;
+        let intervalId;
+
+    setSlideContent(currentSlide, slides[0]);
+
+    currentSlide.style.opacity = '1';
+    nextSlide.style.opacity = '0';
+
+        function isImage(slide) {
+            return slide.endsWith('.png') || slide.endsWith('.jpg') || slide.endsWith('.jpeg') || slide.endsWith('.gif');
+        }
+
+        function getImageUrl(slide) {
+            if (slide.startsWith('/static/')) {
+                return slide;
+            } else if (slide.startsWith('http')) {
+                return slide;
+            } else {
+                return '/static/' + slide;
+            }
+        }
+
+        function setSlideContent(element, slide) {
+            if (isImage(slide)) {
+                element.classList.remove('text-slide');
+                element.style.background = '';
+                element.style.backgroundImage = `url('${getImageUrl(slide)}')`;
+                element.style.backgroundSize = 'contain';
+                element.style.backgroundRepeat = 'no-repeat';
+                element.style.backgroundPosition = 'center';
+                element.style.animation = 'none';
+                element.textContent = '';
+            } else {
+                element.style.backgroundImage = '';
+                element.style.animation = 'none';
+                element.style.backgroundSize = '';
+                element.style.backgroundPosition = '';
+                element.textContent = slide;
+                element.classList.add('text-slide');
+            }
+        }
+
+        function preloadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+
+        async function changeSlide() {
+            const nextIndex = (currentIndex + 1) % slides.length;
+            const nextSlideValue = slides[nextIndex];
+            const isNextText = !isImage(nextSlideValue);
+            const isCurrentText = !isImage(slides[currentIndex]);
+            if (isImage(nextSlideValue)) {
+                try {
+                    await preloadImage(getImageUrl(nextSlideValue));
+                } catch (e) {
+                    console.error('Failed to load image:', nextSlideValue, e);
+                }
+            }
+
+            setSlideContent(nextSlide, nextSlideValue);
+            nextSlide.style.opacity = '0';
+
+            nextSlide.style.transition = 'opacity 1s ease-in-out';
+            currentSlide.style.transition = 'opacity 1s ease-in-out';
+
+            currentSlide.style.animationPlayState = 'paused';
+            nextSlide.style.animationPlayState = isNextText ? 'running' : 'paused';
+
+            void nextSlide.offsetWidth;
+
+            nextSlide.style.opacity = '1';
+            currentSlide.style.opacity = '0';
+
+            setTimeout(() => {
+                let temp = currentSlide;
+                currentSlide = nextSlide;
+                nextSlide = temp;
+
+                currentSlide.style.opacity = '1';
+                nextSlide.style.opacity = '0';
+
+                currentSlide.style.animationPlayState = isNextText ? 'running' : 'paused';
+                nextSlide.style.animationPlayState = 'paused';
+
+                currentIndex = nextIndex;
+
+                requestAnimationFrame(() => {
+                    currentSlide.style.transition = 'opacity 1s ease-in-out';
+                    nextSlide.style.transition = 'opacity 1s ease-in-out';
+                });
+            }, 1000);
+        }
+
+        function startSlideshow() {
+            if (intervalId) clearInterval(intervalId);
+            if (slides.length > 1) {
+                intervalId = setInterval(changeSlide, 5000);
+            }
+        }
+
+        socket.on("wmark_slides", (data) => {
+            slides = data.slides && data.slides.length > 0 ? data.slides : ['wmark.png'];
+            currentIndex = 0;
+            setSlideContent(currentSlide, slides[0]);
+            startSlideshow();
+        });
+
+        socket.on('connect', () => {
+            socket.emit('init_client');
+        });
+    </script>
+</body>
+</html>

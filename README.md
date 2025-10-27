@@ -24,6 +24,8 @@ RIVALS_USER=your_rivals_username (optional)
 TRACKERGG_API_KEY=your_trackergg_api_key (optional)
 SUBTEXT=your_custom_subtext (optional)
 WIDGET_PORT=your_widget_port (optional, default 5001)
+DISABLE_LYRICS=true/false (optional, default false)
+WMARK_SLIDES=/static/wmark.png;thing 1;thing 2;etc (optional, semicolon separated list of images/text for watermark slideshow)
 ```
 
 Add `http://localhost:5000/callback` as a Redirect URI in your Spotify Developer Dashboard for the app btw.
