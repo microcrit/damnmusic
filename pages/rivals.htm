@@ -18,15 +18,18 @@
             <div class="divider"></div>
             <div class="hero-stats" id="hero-stats">
                 <div class="hero-content" id="hero-content">
-                    <img class="hero-icon" id="hero-icon" src="">
                     <div class="hero-info">
+                        <div class="hero-icon-container">
+                            <div class="hero-icon-bg" id="hero-icon-bg"></div>
+                            <img class="hero-icon" id="hero-icon" src="">
+                        </div>
                         <div class="hero-name" id="hero-name"></div>
                         <div class="hero-role" id="hero-role"></div>
                         <div class="hero-stats-grid" id="hero-stats-grid"></div>
                     </div>
                 </div>
             </div>
-            <div style="margin-top: auto;">
+            <div style="margin-bottom: 10px; transform: translateY(-10px);">
                 <p style="opacity: 0.4">Holy Ghost Prep E-Sports</p>
             </div>
         </div>
@@ -132,6 +135,39 @@
             to {
                 opacity: 1;
                 transform: translateX(0);
+            }
+        }
+
+        @keyframes stats-out-retreat {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+
+        @keyframes hero-icon-out {
+            from {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.8) rotate(-10deg);
+            }
+        }
+
+        @keyframes hero-icon-in {
+            from {
+                opacity: 0;
+                transform: scale(0.8) rotate(10deg);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
             }
         }
 
@@ -291,28 +327,35 @@
         }
 
         .hero-content.slide-out {
-            animation: slide-out-anim 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            animation: slide-out-anim 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
         .hero-content.slide-in {
-            animation: slide-in-anim 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation: slide-in-anim 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .hero-icon-container {
+            position: relative;
+            display: inline-block;
         }
 
         .hero-icon {
-            height: 150px;
+            height: 200px;
             aspect-ratio: 1/1;
             object-fit: cover;
             animation: fade-scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             transition: transform 0.3s ease;
+            position: relative;
         }
 
         .hero-info {
             text-align: left;
             flex: 1;
+            min-width: 0;
         }
 
         .hero-name {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 600;
             color: white;
             margin-bottom: 4px;
@@ -320,28 +363,39 @@
         }
 
         .hero-role {
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             animation: float-up 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
         }
 
         .hero-stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 6px;
         }
 
         .stat-item {
             background: rgba(255, 255, 255, 0.3);
-            padding: 10px 18px;
+            padding: 0.5vw 0.8vw;
             text-align: center;
+            min-height: 4vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
         .stat-value {
-            font-size: 1.5rem;
+            font-size: 1.4vw;
             font-weight: 600;
             color: white;
+        }
+
+        .stat-label {
+            font-size: 0.75vw;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 0.2vh;
         }
 
         .stat-item.updated .stat-value {
@@ -369,7 +423,7 @@
         let heroStats = [];
         let switchInterval;
         let current_palette = null;
-        let previousStats = {};
+        let heroPreviousStats = {};
 
         function hslToRgb(h, s, l) {
             s /= 100;
@@ -593,35 +647,57 @@
             let el_hero_name = document.querySelector(".hero-name");
             let el_hero_role = document.querySelector(".hero-role");
             let el_hero_stats_grid = document.querySelector(".hero-stats-grid");
-            let el_hero_icon = document.querySelector(".hero-icon");
+            let el_hero_icon_container = document.querySelector(".hero-icon-container");
             
-            el_hero_content.classList.add("slide-out");
-            void el_hero_content.offsetWidth;
+            const statItems = el_hero_stats_grid.querySelectorAll('.stat-item');
+            statItems.forEach((item, index) => {
+                item.style.animation = `stats-out-retreat 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.05 + index * 0.07}s both`;
+            });
+            el_hero_stats_grid.style.animation = 'stats-out-retreat 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both';
             
-            setTimeout(async () => {
-                await cb();
-                
-                el_hero_name.style.animation = 'none';
-                el_hero_role.style.animation = 'none';
-                el_hero_stats_grid.style.animation = 'none';
-                el_hero_icon.style.animation = 'none';
-                void el_hero_name.offsetWidth;
-                void el_hero_role.offsetWidth;
-                void el_hero_stats_grid.offsetWidth;
-                void el_hero_icon.offsetWidth;
-                el_hero_name.style.animation = '';
-                el_hero_role.style.animation = '';
-                el_hero_stats_grid.style.animation = '';
-                el_hero_icon.style.animation = '';
-                
-                el_hero_content.classList.remove("slide-out");
-                el_hero_content.classList.add("slide-in");
+            el_hero_icon_container.style.animation = 'hero-icon-out 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+            
+            
+            el_hero_name.style.animation = 'stats-out-retreat 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s both';
+            el_hero_role.style.animation = 'stats-out-retreat 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both';
+            
+            setTimeout(() => {
+                el_hero_content.classList.add("slide-out");
                 void el_hero_content.offsetWidth;
                 
-                setTimeout(() => {
-                    el_hero_content.classList.remove("slide-in");
-                }, 500);
-            }, 400);
+                setTimeout(async () => {
+                    await cb();
+                    
+                    el_hero_name.style.animation = 'none';
+                    el_hero_role.style.animation = 'none';
+                    el_hero_stats_grid.style.animation = 'none';
+                    el_hero_icon_container.style.animation = 'none';
+                    
+                    void el_hero_name.offsetWidth;
+                    void el_hero_role.offsetWidth;
+                    void el_hero_stats_grid.offsetWidth;
+                    void el_hero_icon_container.offsetWidth;
+                    
+                    
+                    el_hero_name.style.animation = '';
+                    el_hero_role.style.animation = '';
+                    el_hero_stats_grid.style.animation = '';
+                    
+                    
+                    
+                    el_hero_icon_container.style.animation = 'hero-icon-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+                    
+                    setTimeout(() => {
+                        el_hero_content.classList.remove("slide-out");
+                        el_hero_content.classList.add("slide-in");
+                        void el_hero_content.offsetWidth;
+                        
+                        setTimeout(() => {
+                            el_hero_content.classList.remove("slide-in");
+                        }, 600);
+                    }, 150);
+                }, 300);
+            }, 1000); 
         }
 
         socket.on('connect', () => {
@@ -665,7 +741,7 @@
             switchInterval = setInterval(() => {
                 currentHeroIndex = (currentHeroIndex + 1) % heroStats.length;
                 transition_hero(() => updateHeroDisplay());
-            }, 5000);
+            }, 10000);
         }
 
         async function updateHeroDisplay() {
@@ -674,14 +750,18 @@
             const hero = heroStats[currentHeroIndex];
             let metadata = hero.metadata || {};
             const stats = hero.stats || {};
+            const heroName = metadata.name || 'Unknown';
 
-            document.getElementById('hero-name').innerText = metadata.name || 'Unknown';
+            document.getElementById('hero-name').innerText = heroName;
             document.getElementById('hero-role').innerText = metadata.roleName || '';
 
             const heroIcon = document.getElementById('hero-icon');
+            const heroIconBg = document.getElementById('hero-icon-bg');
             const proxiedUrl = "/img_proxy?url=" + encodeURIComponent(metadata.imageUrl || "");
+            heroIcon.crossOrigin = "anonymous";
             if (heroIcon.src !== proxiedUrl) {
                 heroIcon.src = proxiedUrl;
+                heroIconBg.style.backgroundImage = `url(${proxiedUrl})`;
 
                 if (heroIcon.src) {
                     await new Promise((resolve) => {
@@ -711,6 +791,9 @@
                 { label: 'Damage', value: stats.totalHeroDamage ? stats.totalHeroDamage.displayValue : '0' }
             ];
 
+            
+            const previousHeroStats = heroPreviousStats[heroName] || {};
+
             keyStats.forEach((stat, index) => {
                 const statDiv = document.createElement('div');
                 statDiv.className = 'stat-item';
@@ -718,14 +801,20 @@
                     <div class="stat-value">${stat.value}</div>
                     <div class="stat-label">${stat.label}</div>
                 `;
-                statDiv.style.animation = `float-up 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.4 + index * 0.1}s both`;
+                statDiv.style.animation = `float-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.3 + index * 0.06}s both`;
                 statsGrid.appendChild(statDiv);
 
-                if (previousStats[stat.label] !== stat.value) {
+                
+                if (previousHeroStats[stat.label] !== undefined && previousHeroStats[stat.label] !== stat.value) {
                     statDiv.classList.add('updated');
-                    setTimeout(() => statDiv.classList.remove('updated'), 500);
+                    setTimeout(() => statDiv.classList.remove('updated'), 1000);
                 }
-                previousStats[stat.label] = stat.value;
+            });
+
+            
+            heroPreviousStats[heroName] = {};
+            keyStats.forEach(stat => {
+                heroPreviousStats[heroName][stat.label] = stat.value;
             });
         }
     </script>
