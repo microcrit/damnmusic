@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Marvel Rivals Stats</title>
     <meta charset="UTF-8">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js" integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"
+        integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
+
 <body>
     <div class="grandinfo">
         <div class="info hide">
             <div class="profile-container">
                 <img class="avatar" id="avatar" src="">
                 <div class="profile-text">
-                    <div class="username-clan"><div class="username" id="username"></div> <div class="guild-name" id="guild-name"></div></div>
+                    <div class="username-clan">
+                        <div class="username" id="username"></div>
+                        <div class="guild-name" id="guild-name"></div>
+                    </div>
                     <div class="rank" id="rank"></div>
                 </div>
             </div>
@@ -61,15 +68,19 @@
             0% {
                 background-position: 0% 50%;
             }
+
             25% {
                 background-position: 50% 100%;
             }
+
             50% {
                 background-position: 100% 50%;
             }
+
             75% {
                 background-position: 50% 0%;
             }
+
             100% {
                 background-position: 0% 50%;
             }
@@ -80,6 +91,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -91,6 +103,7 @@
                 opacity: 0;
                 transform: scale(0.98);
             }
+
             to {
                 opacity: 1;
                 transform: scale(1);
@@ -102,14 +115,17 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+
             45% {
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             55% {
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             100% {
                 opacity: 1;
                 transform: translateY(0);
@@ -121,6 +137,7 @@
                 opacity: 1;
                 transform: translateX(0);
             }
+
             to {
                 opacity: 0;
                 transform: translateX(-50px);
@@ -132,6 +149,7 @@
                 opacity: 0;
                 transform: translateX(50px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -143,6 +161,7 @@
                 opacity: 1;
                 transform: scale(1);
             }
+
             to {
                 opacity: 0;
                 transform: scale(0.5);
@@ -154,6 +173,7 @@
                 opacity: 1;
                 transform: scale(1) rotate(0deg);
             }
+
             to {
                 opacity: 0;
                 transform: scale(0.8) rotate(-10deg);
@@ -165,6 +185,7 @@
                 opacity: 0;
                 transform: scale(0.8) rotate(10deg);
             }
+
             to {
                 opacity: 1;
                 transform: scale(1) rotate(0deg);
@@ -188,7 +209,7 @@
             gap: 20px;
             width: 30vw;
             height: 90vh;
-            
+
             padding: 32px;
             position: relative;
             overflow: visible;
@@ -196,18 +217,18 @@
 
             background-color: rgb(0, 0, 0);
             background-image:
-                radial-gradient(at 40% 20%, hsla(302,100%,74%,1) 0px, transparent 50%),
-                radial-gradient(at 80% 0%, hsla(271,100%,56%,1) 0px, transparent 50%),
-                radial-gradient(at 0% 50%, hsla(240,100%,72%,1) 0px, transparent 50%),
-                radial-gradient(at 80% 50%, hsla(340,100%,76%,1) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, hsla(302,100%,77%,1) 0px, transparent 50%),
-                radial-gradient(at 80% 100%, hsla(240,100%,81%,1) 0px, transparent 50%),
-                radial-gradient(at 0% 0%, hsla(343,100%,76%,1) 0px, transparent 50%);
+                radial-gradient(at 40% 20%, hsla(302, 100%, 74%, 1) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, hsla(271, 100%, 56%, 1) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, hsla(240, 100%, 72%, 1) 0px, transparent 50%),
+                radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 1) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, hsla(302, 100%, 77%, 1) 0px, transparent 50%),
+                radial-gradient(at 80% 100%, hsla(240, 100%, 81%, 1) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, hsla(343, 100%, 76%, 1) 0px, transparent 50%);
             background-size: 200% 200%;
             box-shadow: none !important;
-            
+
             border: none;
-            
+
             opacity: 0;
             transform: none;
             transition: all 0.3s ease-out;
@@ -407,10 +428,12 @@
                 color: #ffffff;
                 transform: scale(1.1);
             }
+
             50% {
                 color: #ffff00;
                 transform: scale(1.2);
             }
+
             100% {
                 color: #ffffff;
                 transform: scale(1);
@@ -424,6 +447,7 @@
         let switchInterval;
         let current_palette = null;
         let heroPreviousStats = {};
+        let isTransitioning = false;
 
         function hslToRgb(h, s, l) {
             s /= 100;
@@ -473,7 +497,7 @@
         function generateComplementaryColors(baseColor) {
             const [h, s, l] = rgbToHsl(baseColor.r, baseColor.g, baseColor.b);
             const generated = [];
-            
+
             generated.push({
                 r: baseColor.r,
                 g: baseColor.g,
@@ -481,13 +505,13 @@
                 h, s, l,
                 rgb: [baseColor.r, baseColor.g, baseColor.b]
             });
-            
+
             const [r1, g1, b1] = hslToRgb((h + 60) % 360, Math.min(s + 10, 100), Math.min(l + 10, 90));
             generated.push({ r: r1, g: g1, b: b1, h: (h + 60) % 360, s: Math.min(s + 10, 100), l: Math.min(l + 10, 90), rgb: [r1, g1, b1] });
-        
+
             const [r2, g2, b2] = hslToRgb((h - 60 + 360) % 360, Math.min(s + 10, 100), Math.min(l + 10, 90));
             generated.push({ r: r2, g: g2, b: b2, h: (h - 60 + 360) % 360, s: Math.min(s + 10, 100), l: Math.min(l + 10, 90), rgb: [r2, g2, b2] });
-            
+
             return generated;
         }
 
@@ -501,7 +525,7 @@
 
                     const img = new Image();
                     img.crossOrigin = "anonymous";
-                    img.onload = function() {
+                    img.onload = function () {
                         ctx.drawImage(img, 0, 0, 100, 100);
                         const imageData = ctx.getImageData(0, 0, 100, 100);
                         const data = imageData.data;
@@ -545,7 +569,7 @@
                         };
                         resolve(palette);
                     };
-                    img.onerror = function() {
+                    img.onerror = function () {
                         console.error("Failed to load image for color extraction");
                         resolve(null);
                     };
@@ -568,7 +592,7 @@
                     ]
                 };
             }
-            
+
             const colors = palette.colors;
 
             const vibrantColors = colors
@@ -636,68 +660,72 @@
             el_info.classList.remove("hide");
             el_info.classList.add("show");
             void el_info.offsetWidth;
-            
+
             setTimeout(() => {
                 el_info.classList.add("animation-done");
             }, 300);
         }
 
         function transition_hero(cb) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+
             let el_hero_content = document.querySelector(".hero-content");
             let el_hero_name = document.querySelector(".hero-name");
             let el_hero_role = document.querySelector(".hero-role");
             let el_hero_stats_grid = document.querySelector(".hero-stats-grid");
             let el_hero_icon_container = document.querySelector(".hero-icon-container");
-            
+
             const statItems = el_hero_stats_grid.querySelectorAll('.stat-item');
             statItems.forEach((item, index) => {
                 item.style.animation = `stats-out-retreat 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.05 + index * 0.07}s both`;
             });
             el_hero_stats_grid.style.animation = 'stats-out-retreat 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both';
-            
+
             el_hero_icon_container.style.animation = 'hero-icon-out 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
-            
-            
+
+
             el_hero_name.style.animation = 'stats-out-retreat 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s both';
             el_hero_role.style.animation = 'stats-out-retreat 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both';
-            
+
             setTimeout(() => {
                 el_hero_content.classList.add("slide-out");
                 void el_hero_content.offsetWidth;
-                
+
                 setTimeout(async () => {
                     await cb();
-                    
+
                     el_hero_name.style.animation = 'none';
                     el_hero_role.style.animation = 'none';
                     el_hero_stats_grid.style.animation = 'none';
                     el_hero_icon_container.style.animation = 'none';
-                    
+
                     void el_hero_name.offsetWidth;
                     void el_hero_role.offsetWidth;
                     void el_hero_stats_grid.offsetWidth;
                     void el_hero_icon_container.offsetWidth;
-                    
-                    
+
+
                     el_hero_name.style.animation = '';
                     el_hero_role.style.animation = '';
                     el_hero_stats_grid.style.animation = '';
-                    
-                    
-                    
+
+
+
                     el_hero_icon_container.style.animation = 'hero-icon-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
-                    
+
                     setTimeout(() => {
                         el_hero_content.classList.remove("slide-out");
                         el_hero_content.classList.add("slide-in");
                         void el_hero_content.offsetWidth;
-                        
+
                         setTimeout(() => {
                             el_hero_content.classList.remove("slide-in");
+                            isTransitioning = false;
                         }, 600);
                     }, 150);
                 }, 300);
-            }, 1000); 
+            }, 1000);
         }
 
         socket.on('connect', () => {
@@ -737,10 +765,14 @@
 
         async function startHeroRotation() {
             if (switchInterval) clearInterval(switchInterval);
-            await updateHeroDisplay();
+            if (!isTransitioning) {
+                await updateHeroDisplay();
+            }
             switchInterval = setInterval(() => {
-                currentHeroIndex = (currentHeroIndex + 1) % heroStats.length;
-                transition_hero(() => updateHeroDisplay());
+                if (!isTransitioning) {
+                    currentHeroIndex = (currentHeroIndex + 1) % heroStats.length;
+                    transition_hero(() => updateHeroDisplay());
+                }
             }, 10000);
         }
 
@@ -791,7 +823,7 @@
                 { label: 'Damage', value: stats.totalHeroDamage ? stats.totalHeroDamage.displayValue : '0' }
             ];
 
-            
+
             const previousHeroStats = heroPreviousStats[heroName] || {};
 
             keyStats.forEach((stat, index) => {
@@ -804,14 +836,14 @@
                 statDiv.style.animation = `float-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.3 + index * 0.06}s both`;
                 statsGrid.appendChild(statDiv);
 
-                
+
                 if (previousHeroStats[stat.label] !== undefined && previousHeroStats[stat.label] !== stat.value) {
                     statDiv.classList.add('updated');
                     setTimeout(() => statDiv.classList.remove('updated'), 1000);
                 }
             });
 
-            
+
             heroPreviousStats[heroName] = {};
             keyStats.forEach(stat => {
                 heroPreviousStats[heroName][stat.label] = stat.value;
@@ -819,4 +851,5 @@
         }
     </script>
 </body>
+
 </html>
