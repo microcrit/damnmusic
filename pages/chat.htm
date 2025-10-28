@@ -113,7 +113,7 @@
             background-size: 200% 200%;
             animation: mesh-gradient 16s ease-in-out infinite;
             
-            border: none;
+            border: 4px solid rgba(255, 255, 255, 0.4);
             opacity: 1;
         }
 
@@ -168,7 +168,7 @@
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 4px;
             padding: 16px;
             z-index: 2;
             scroll-behavior: smooth;
@@ -186,22 +186,10 @@
         }
 
         .chat-message {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 12px 16px;
-            border-radius: 12px;
             text-align: left;
-            border: 1px solid rgba(255, 255, 255, 0.3);
             animation: slide-in-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            transition: transform 0.2s ease, background 0.2s ease;
-            backdrop-filter: brightness(0.9) saturate(1.2);
+            margin-bottom: 8px;
         }
-
-        .chat-message:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateX(4px);
-        }
-
         .message-user {
             font-weight: 700;
             font-size: 1.3rem;
@@ -245,6 +233,39 @@
             margin-top: 40px;
             animation: fade-in 1s ease-out;
         }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            .message-user {
+                font-size: 1.1rem;
+            }
+            .message-text {
+                font-size: 1rem;
+            }
+            .message-timestamp {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 1.5rem;
+            }
+            .message-user {
+                font-size: 1rem;
+            }
+            .message-text {
+                font-size: 0.9rem;
+            }
+            .message-timestamp {
+                font-size: 0.8rem;
+            }
+            .chat-container {
+                padding: 8px;
+            }
+        }
     </style>
     <script>
         let socket = io();
@@ -284,7 +305,7 @@
             
             messageDiv.innerHTML = `
                 <div class="message-user" style="color: ${userColor};">
-                    <span>${user}</span>
+                    <span>${user}:</span>
                 </div>
                 <div class="message-text">${escapeHtml(message)}</div>
                 <div class="message-timestamp">${formatTimestamp()}</div>
@@ -323,7 +344,7 @@
         });
 
         socket.on('chat_history', (history) => {
-            history.forEach(msg => addMessage(msg.user, msg.channel, msg.message, false));
+            history.forEach(msg => addMessage(msg.user, msg.channel, msg.message, msg.emotes, false));
             if (history.length > 0) {
                 const container = document.getElementById('chat-container');
                 const lastMsg = container.lastElementChild;
@@ -335,7 +356,7 @@
 
         socket.on('chat_message', (data) => {
             console.log('Chat message received:', data);
-            addMessage(data.user, data.channel, data.message);
+            addMessage(data.user, data.channel, data.message, data.emotes);
             
             const channelNameEl = document.getElementById('channel-name');
             if (!channelNameEl.textContent && data.channel) {

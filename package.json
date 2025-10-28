@@ -2,7 +2,6 @@
     "scripts": {
         "start": "python3 main.py",
         "inst": "python3 -m pip install -r requirements.txt",
-        "flaresolverr": "docker run -d --name=flaresolverr -p 8191:8191 -e LOG_LEVEL=info --restart unless-stopped ghcr.io/flaresolverr/flaresolverr:latest",
-        "srs": "docker run -d -p 1935:1935 -p 1985:1985 -p 8080:8080 -p 8000:8000/udp -p 10080:10080/udp ossrs/srs:6"
+        "flaresolverr": "docker run -d --name=flaresolverr -p 8191:8191 -e LOG_LEVEL=info --restart unless-stopped ghcr.io/flaresolverr/flaresolverr:latest"
     }
 }
